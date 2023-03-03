@@ -1,1 +1,18 @@
 # authorization-keys-example
+
+This simple example demonstrates how to retrieve and use the authorization keys associated with a Deploy.
+
+## Running the Example Code
+
+Prepare your environment with:
+
+`make prepare`
+
+Build the code and run the tests:
+
+`make test`
+
+Build the code without running tests:
+
+`make build-contract`
+
