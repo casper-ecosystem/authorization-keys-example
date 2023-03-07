@@ -39,14 +39,14 @@ make prepare
 make test
 ```
 
+Upon installation, the contract code stores the authorization keys into a NamedKey. The contract also contains an entry-point that returns the intersection of the caller's authorization keys and the authorization keys saved during contract installation.
+
 The example repository contains 3 folders:
 - `client` - session code that interacts with the blockchain containing two Wasm files:
    - `add_keys.wasm` - session code that adds an associated key to the calling account
-   - `contract_call.wasm` - session code that checks if the entry-point caller is listed in the account's associated keys
+   - `contract_call.wasm` - session code that checks if one of the entry-point caller's authorization keys is listed in the contract's installer authorization keys
 - `contract` - a simple contract that demonstrates the usage of authorization keys and compiles into a `contract.wasm` file
 - `tests` - tests and supporting utilities to verify and demonstrate the contract's expected behavior
-
-Upon installation, the contract code stores the authorization keys into a NamedKey. The contract also contains an entry-point that returns the intersection of the caller's authorization keys and the authorization keys saved during contract installation.
 
 ### Testing the authorization keys
 
