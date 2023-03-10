@@ -1,15 +1,17 @@
 # Using Authorization Keys
 
-This topic explains the usage of authorization keys when signing a deploy and how to access them from a smart contract. Try the [Working with Authorization Keys](/resources/tutorials/advanced/authorization-keys/) tutorial for an example.
+This topic explains the usage of authorization keys when signing a deploy and how to access them from a smart contract. Try the [Working with Authorization Keys](TUTORIAL.md) tutorial for an example. <!-- TODO If moved to the docs, the link would be: /resources/tutorials/advanced/authorization-keys/ -->
 
 ## Account Associated Keys vs. Deploy Authorization Keys
 
 Let's review the difference between associated keys (to an Account) and authorization keys (for a Deploy).
 
-- Associated keys are public keys that are associated with a given account. To understand associated keys and how they are linked to an account, read about [associated keys and weights](/concepts/design/casper-design/#accounts-associated-keys-weights) and try the [Two-Party Multi-Signature](/resources/tutorials/advanced/two-party-multi-sig/) tutorial.
+- Associated keys are public keys that are associated with a given account. To understand associated keys and how they are linked to an account, read about [associated keys and weights](https://docs.casperlabs.io/concepts/design/casper-design/#accounts-associated-keys-weights) and try the [Two-Party Multi-Signature](https://docs.casperlabs.io/resources/tutorials/advanced/two-party-multi-sig/) tutorial.
 - Authorization keys are public keys used to sign a deploy and are listed in the Deploy's `approvals`. Authorization keys are a subset of the associated keys of the account under which the deploy is executed. 
 - When a node receives a deploy, it checks that the deploy has the required authorization keys under `approvals` before including it in a block.
 - Different deploys executing the same smart contract can have different authorization keys.
+
+<!-- TODO Remove all instances of https://docs.casperlabs.io if this file is moved to the docs repository-->
 
 ![Image showing associated keys and authorization keys](./authorization-keys.png)
 
@@ -62,4 +64,4 @@ Contract code can retrieve the set of authorization keys for a given deploy by c
 
 Authorization keys give developers more fine-grained control within their smart contracts. For example, developers can define a hierarchy within an account's associated keys. Then, they can use this hierarchy and the current execution's authorization keys to limit access for certain operations.
 
-Try the [Working with Authorization Keys](/resources/tutorials/advanced/authorization-keys/) tutorial to view an example workflow.
+Try the [Working with Authorization Keys](https://docs.casperlabs.io/resources/tutorials/advanced/authorization-keys/) tutorial to view an example workflow.
