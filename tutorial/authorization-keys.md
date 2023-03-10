@@ -1,22 +1,22 @@
 # Using Authorization Keys
 
-This topic explains the usage of authorization keys when signing a Deploy and how to access them from a smart contract. Try the [Working with Authorization Keys](/resources/tutorials/advanced/authorization-keys/) tutorial as well.
+This topic explains the usage of authorization keys when signing a deploy and how to access them from a smart contract. Try the [Working with Authorization Keys](/resources/tutorials/advanced/authorization-keys/) tutorial for an example.
 
 ## Account Associated Keys vs. Deploy Authorization Keys
 
-Let's review what Account associated keys and Deploy authorization keys are.
+Let's review the difference between associated keys (to an Account) and authorization keys (for a Deploy).
 
-- Associated keys are public keys that are associated with a given account. To understand more about associated keys and how they are linked to an account, read about [associated keys and weights](/concepts/design/casper-design/#accounts-associated-keys-weights) and try the [Two-Party Multi-Signature](/resources/tutorials/advanced/two-party-multi-sig/) tutorial.
-- Authorization keys are public keys used to sign a Deploy, listed in the `approvals` of a Deploy. Authorization keys are a subset of the associated keys of the Account under which the Deploy is executed. 
-- The node receiving the Deploy checks that the Deploy has the required authorization keys under approvals before including it in a Block
-- Deploys executing the same smart contract can have different authorization keys under the Deploys' approvals section.
+- Associated keys are public keys that are associated with a given account. To understand associated keys and how they are linked to an account, read about [associated keys and weights](/concepts/design/casper-design/#accounts-associated-keys-weights) and try the [Two-Party Multi-Signature](/resources/tutorials/advanced/two-party-multi-sig/) tutorial.
+- Authorization keys are public keys used to sign a deploy and are listed in the Deploy's `approvals`. Authorization keys are a subset of the associated keys of the account under which the deploy is executed. 
+- When a node receives a deploy, it checks that the deploy has the required authorization keys under `approvals` before including it in a block.
+- Different deploys executing the same smart contract can have different authorization keys.
 
 ![Image showing associated keys and authorization keys](./authorization-keys.png)
 
 <!-- TODO Additional formatting if needed
 <p align="center"><img src={"./authorization-keys.png"} alt="Image showing associated keys and authorization keys" width="400"/></p> -->
 
-Here is a sample JSON representation of the Account's associated keys:
+Here is a sample JSON representation of an Account's associated keys:
 
 ```
 "associated_keys": [
@@ -56,7 +56,7 @@ Here is a sample JSON representation of a Deploy's authorization keys:
 
 ## Accessing Authorization Keys from a Smart Contract
 
-Contract code can retrieve the set of authorization keys for a given Deploy by calling the `runtime::list_authorization_keys` function, which returns the set of account hashes representing the keys used to sign the Deploy under which the contract is executing. <!-- TODO add a link to docs.rs. -->
+Contract code can retrieve the set of authorization keys for a given deploy by calling the `runtime::list_authorization_keys` function, which returns the set of account hashes representing the keys used to sign the deploy under which the contract is executing. <!-- TODO add a link to docs.rs. -->
 
 ## When to Use Authorization Keys
 
