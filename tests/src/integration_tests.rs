@@ -104,7 +104,7 @@ mod tests {
         let mut builder = InMemoryWasmTestBuilder::default();
         builder.run_genesis(&run_genesis_request).commit();
 
-        // Add ACCOUNT_USER_1 to DEFAULT_ACCOUNT_ADDR associated keys
+        // Add account_addr_1 to the default account's associated keys
         let session_code = PathBuf::from(ADD_KEYS_WASM);
         let session_args = runtime_args! {
             ASSOCIATED_ACCOUNT => account_addr_1
@@ -165,7 +165,7 @@ mod tests {
         let mut builder = InMemoryWasmTestBuilder::default();
         builder.run_genesis(&run_genesis_request).commit();
 
-        // Add ACCOUNT_USER_1 to DEFAULT_ACCOUNT_ADDR associated keys
+        // Add account_addr_1 to the default account's associated keys
         let session_code = PathBuf::from(ADD_KEYS_WASM);
         let session_args = runtime_args! {
             ASSOCIATED_ACCOUNT => account_addr_1
@@ -377,8 +377,8 @@ mod tests {
             .commit()
             .expect_success();
 
-        // We reach the same state as previous test but here ACCOUNT_USER_2 does not have contract installer (DEFAULT_ACCOUNT_ADDR) in associated keys.
-        // Deploy will therefore revert with PermissionDenied
+        // We reach the same state as in the previous test, but here ACCOUNT_USER_2 does not have DEFAULT_ACCOUNT_ADDR (from the contract installer) in its associated keys
+        // The deploy will therefore revert with PermissionDenied
         let entry_point_deploy_item = DeployItemBuilder::new()
             .with_empty_payment_bytes(runtime_args! {ARG_AMOUNT => *DEFAULT_PAYMENT})
             .with_authorization_keys(&[account_addr_2])
@@ -582,7 +582,7 @@ mod tests {
             .commit()
             .expect_success();
 
-        // Add ACCOUNT_USER_2 to ACCOUNT_USER_1 associated keys
+        // Add account_addr_2 to ACCOUNT_USER_1 associated keys
         let session_code = PathBuf::from(ADD_KEYS_WASM);
         let session_args = runtime_args! {
             ASSOCIATED_ACCOUNT => account_addr_2
@@ -611,8 +611,8 @@ mod tests {
             ARG_KEY_NAME => INTERSECTION_RECEIPT
         };
 
-        // ACCOUNT_USER_2 as associated key is not among contract installer (DEFAULT_ACCOUNT_ADDR) associated keys
-        // Deploy will therefore revert with PermissionDenied
+        // account_addr_2 as an associated key is not among the default account's associated keys
+        // The deploy will therefore revert with PermissionDenied
         let entry_point_deploy_item = DeployItemBuilder::new()
             .with_empty_payment_bytes(runtime_args! {ARG_AMOUNT => *DEFAULT_PAYMENT})
             .with_authorization_keys(&[account_addr_1, account_addr_2])
@@ -629,7 +629,7 @@ mod tests {
         assert_expected_error(
             error,
             0,
-            "should fail execution since ACCOUNT_USER_2 as associated key is not in installer (DEFAULT_ACCOUNT_ADDR) associated keys",
+            "Should fail execution since account_addr_2 is not in the installer's associated keys",
         );
     }
 }
