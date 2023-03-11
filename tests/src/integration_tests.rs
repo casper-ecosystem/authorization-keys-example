@@ -304,7 +304,6 @@ mod tests {
     fn should_disallow_entry_point_without_authorization_key() {
         let secret_key = SecretKey::ed25519_from_bytes(ACCOUNT_USER_1).unwrap();
         let public_key = PublicKey::from(&secret_key);
-        let account_addr_1 = AccountHash::from(&public_key);
 
         let account = GenesisAccount::account(
             public_key,
@@ -356,28 +355,7 @@ mod tests {
             .map(ContractHash::new)
             .unwrap();
 
-        // Add DEFAULT_ACCOUNT_ADDR to ACCOUNT_USER_1 associated keys
-        let session_code = PathBuf::from(ADD_KEYS_WASM);
-        let session_args = runtime_args! {
-            ASSOCIATED_ACCOUNT => *DEFAULT_ACCOUNT_ADDR
-        };
-
-        let add_keys_deploy_item = DeployItemBuilder::new()
-            .with_empty_payment_bytes(runtime_args! {ARG_AMOUNT => *DEFAULT_PAYMENT})
-            .with_authorization_keys(&[account_addr_1])
-            .with_address(account_addr_1)
-            .with_session_code(session_code, session_args)
-            .build();
-
-        let add_keys_execute_request =
-            ExecuteRequestBuilder::from_deploy_item(add_keys_deploy_item).build();
-
-        builder
-            .exec(add_keys_execute_request)
-            .commit()
-            .expect_success();
-
-        // We reach the same state as in the previous test, but here ACCOUNT_USER_2 does not have DEFAULT_ACCOUNT_ADDR (from the contract installer) in its associated keys
+        // Here ACCOUNT_USER_2 does not have DEFAULT_ACCOUNT_ADDR (from the contract installer) in its associated keys
         // The deploy will therefore revert with PermissionDenied
         let entry_point_deploy_item = DeployItemBuilder::new()
             .with_empty_payment_bytes(runtime_args! {ARG_AMOUNT => *DEFAULT_PAYMENT})
@@ -561,27 +539,6 @@ mod tests {
             .map(ContractHash::new)
             .unwrap();
 
-        // Add DEFAULT_ACCOUNT_ADDR to ACCOUNT_USER_1 associated keys
-        let session_code = PathBuf::from(ADD_KEYS_WASM);
-        let session_args = runtime_args! {
-            ASSOCIATED_ACCOUNT => *DEFAULT_ACCOUNT_ADDR
-        };
-
-        let add_keys_deploy_item = DeployItemBuilder::new()
-            .with_empty_payment_bytes(runtime_args! {ARG_AMOUNT => *DEFAULT_PAYMENT})
-            .with_authorization_keys(&[account_addr_1])
-            .with_address(account_addr_1)
-            .with_session_code(session_code, session_args)
-            .build();
-
-        let add_keys_execute_request =
-            ExecuteRequestBuilder::from_deploy_item(add_keys_deploy_item).build();
-
-        builder
-            .exec(add_keys_execute_request)
-            .commit()
-            .expect_success();
-
         // Add account_addr_2 to ACCOUNT_USER_1 associated keys
         let session_code = PathBuf::from(ADD_KEYS_WASM);
         let session_args = runtime_args! {
@@ -591,7 +548,7 @@ mod tests {
         // Threshold is now 2 for ACCOUNT_USER_1 deploys
         let add_keys_deploy_item = DeployItemBuilder::new()
             .with_empty_payment_bytes(runtime_args! {ARG_AMOUNT => *DEFAULT_PAYMENT})
-            .with_authorization_keys(&[account_addr_1, *DEFAULT_ACCOUNT_ADDR])
+            .with_authorization_keys(&[account_addr_1])
             .with_address(account_addr_1)
             .with_session_code(session_code, session_args)
             .build();
