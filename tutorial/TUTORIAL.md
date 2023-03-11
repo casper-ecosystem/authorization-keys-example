@@ -196,7 +196,7 @@ builder
     .expect_success();
 ```
 
-Since the deploy threshold is now 2, the installer deploy is signed with the default account address and with `account_addr_1`. <!-- TODO link to integration_tests.rs#L191 -->
+Since the deploy threshold is now 2, the installer deploy is signed with the default account hash and with `account_addr_1`. <!-- TODO link to integration_tests.rs#L191 -->
 
 ```rust
 let session_code = PathBuf::from(CONTRACT_WASM);
@@ -254,7 +254,7 @@ The entry point returns the intersection of the caller deploy's authorization ke
 | `DEFAULT_ACCOUNT_ADDR` | `account_addr_1`, `DEFAULT_ACCOUNT_ADDR` | `DEFAULT_ACCOUNT_ADDR` |
 
 <!-- TODO add link to GitHub integration_tests.rs#L224 -->
-This is the main test in this example repository. After installing the contract using the default account, the test adds the default account address to `ACCOUNT_USER_1` as an associated key. 
+This is the main test in this example repository. After installing the contract using the default account, the test adds the default account hash to `ACCOUNT_USER_1` as an associated key. 
 
 ```rust
 let session_code = PathBuf::from(ADD_KEYS_WASM);
@@ -372,7 +372,7 @@ let entry_point_request =
 builder.exec(entry_point_request).expect_success().commit();
 ```
 
-The test then verifies that the result returned was saved in the named keys for `ACCOUNT_USER_1`, containing the default account address.
+The test then verifies that the result returned was saved in the named keys for `ACCOUNT_USER_1`, containing the default account hash.
 
 ```rust
 let intersection_receipt: Key = *builder
