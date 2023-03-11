@@ -69,9 +69,9 @@ The resulting list is stored under a named key of the account calling this sessi
 
 ```rust
 let key_name: String = runtime::get_named_arg(ARG_KEY_NAME);
-    let intersection =
-        runtime::call_contract::<Vec<AccountHash>>(contract_hash, ENTRY_POINT, runtime_args! {});
-    runtime::put_key(&key_name, storage::new_uref(intersection).into());
+let intersection =
+    runtime::call_contract::<Vec<AccountHash>>(contract_hash, ENTRY_POINT, runtime_args! {});
+runtime::put_key(&key_name, storage::new_uref(intersection).into());
 }
 ```
 
@@ -114,6 +114,9 @@ The first test demonstrates contract installation within the context of the call
 <!-- TODO add link to Github integration_tests.rs#L28 -->
 
 ```rust
+let session_code = PathBuf::from(CONTRACT_WASM);
+let session_args = RuntimeArgs::new();
+
 let deploy_item = DeployItemBuilder::new()
     .with_empty_payment_bytes(runtime_args! {ARG_AMOUNT => *DEFAULT_PAYMENT})
     .with_authorization_keys(&[*DEFAULT_ACCOUNT_ADDR])
@@ -123,12 +126,21 @@ let deploy_item = DeployItemBuilder::new()
 
 ```
 
+Here is how the test scenario could be summarized:
+
+| Installer deploy authorization keys | Expected deploy outcome |
+| DEFAULT_ACCOUNT_ADDR |  Success |
+
+
 #### `should_disallow_install_with_non_added_authorization_key`
 
 This test tries to sign the installer deploy with an authorization key that is not part of the caller's associated keys. This is not allowed, because the authorization keys used to sign a deploy need to be a subset of the caller's associated keys. So, the installer deploy fails as expected.
 <!-- TODO add link to Github integration_tests.rs#L57 -->
 
 ```rust
+let session_code = PathBuf::from(CONTRACT_WASM);
+let session_args = RuntimeArgs::new();
+
 let deploy_item = DeployItemBuilder::new()
     .with_empty_payment_bytes(runtime_args! {ARG_AMOUNT => *DEFAULT_PAYMENT})
     .with_authorization_keys(&[*DEFAULT_ACCOUNT_ADDR, account_addr_1])
@@ -141,6 +153,11 @@ builder.exec(execute_request).commit().expect_failure();
 let error = builder.get_error().expect("must have error");
 assert_eq!(error.to_string(), "Authorization failure: not authorized.");
 ```
+
+Here is how the test scenario could be summarized:
+
+| Installer deploy authorization keys | Expected deploy outcome |
+| DEFAULT_ACCOUNT_ADDR, account_addr_1 | Failure |
 
 #### `should_allow_install_with_added_authorization_key`
 
@@ -172,6 +189,8 @@ builder
 Since the default account's associated keys contain the newly added account `account_addr_1`, the default account can sign the deploy with this newly added key. Thus, you will see `account_addr_1` in the list of authorization keys for the installer deploy. <!-- integration_tests.rs#L191 -->
 
 ```rust
+let session_code = PathBuf::from(CONTRACT_WASM);
+
 let deploy_item = DeployItemBuilder::new()
     .with_empty_payment_bytes(runtime_args! {ARG_AMOUNT => *DEFAULT_PAYMENT})
     .with_authorization_keys(&[*DEFAULT_ACCOUNT_ADDR, account_addr_1])
@@ -183,6 +202,12 @@ let execute_request = ExecuteRequestBuilder::from_deploy_item(deploy_item).build
 builder.exec(execute_request).commit().expect_success();
 ```
 
+Here is how the test scenario could be summarized:
+
+| Installer deploy authorization keys | Expected deploy outcome |
+| DEFAULT_ACCOUNT_ADDR, account_addr_1 |  Success |
+
+
 The next tests exercise the contract's unique entry point to calculate the intersection between the caller deploy's authorization keys and the installer deploy's authorization keys.
 
 #### `should_allow_entry_point_with_installer_authorization_key` 
@@ -193,6 +218,12 @@ This test builds on the previous test which adds an associated account to the de
 The additional logic invoking the entry point starts on line 201. <!-- TODO add link to Github integration_tests.rs#L201 -->
 
 ```rust
+// Add ACCOUNT_USER_1 to DEFAULT_ACCOUNT_ADDR associated keys
+let session_code = PathBuf::from(ADD_KEYS_WASM);
+let session_args = runtime_args! {
+    ASSOCIATED_ACCOUNT => account_addr_1
+};
+
 let entry_point_deploy_item = DeployItemBuilder::new()
     .with_empty_payment_bytes(runtime_args! {ARG_AMOUNT => *DEFAULT_PAYMENT})
     .with_authorization_keys(&[account_addr_1])
@@ -206,7 +237,11 @@ let entry_point_request =
 builder.exec(entry_point_request).expect_success().commit();
 ```
 
-The entry point returns a resulting intersection of the caller deploy's authorization keys and installer deploy's authorization keys, which is a list containing the hash `account_addr_1`. Thus, the caller deploy is expected to succeed.
+The entry point returns a resulting intersection of the caller deploy's authorization keys and installer deploy's authorization keys, which is a list containing the hash `account_addr_1`. Thus, the caller deploy is expected to succeed. Here is how the test scenario could be summarized:
+
+| Installer deploy authorization keys | Caller deploy authorization keys | Intersection returned by the entry point|
+| DEFAULT_ACCOUNT_ADDR | account_addr_1, DEFAULT_ACCOUNT_ADDR | account_addr_1 |
+
 
 #### `should_allow_entry_point_with_account_authorization_key`
 
@@ -243,11 +278,61 @@ let entry_point_request =
 builder.exec(entry_point_request).expect_success().commit();
 ```
 
+Here is how the test scenario could be summarized:
+
+| Installer deploy authorization keys | Caller deploy authorization keys | Intersection returned by the entry point|
+| DEFAULT_ACCOUNT_ADDR | account_addr_1, DEFAULT_ACCOUNT_ADDR | DEFAULT_ACCOUNT_ADDR |
+
+
 #### `should_disallow_entry_point_without_authorization_key`
 
 <!-- TODO add link to Github integration_tests.rs#L304 -->
+This test verifies that the entry point returns an error when there is no intersection between the caller deploy's authorization keys and the installer deploy's authorization keys. 
 
-The following tests exercise the entry point using a client contract call.
+The default account hash is used to sign the installer deploy.
+
+```rust
+let session_code = PathBuf::from(CONTRACT_WASM);
+
+let deploy_item = DeployItemBuilder::new()
+    .with_empty_payment_bytes(runtime_args! {ARG_AMOUNT => *DEFAULT_PAYMENT})
+    .with_authorization_keys(&[*DEFAULT_ACCOUNT_ADDR])
+    .with_address(*DEFAULT_ACCOUNT_ADDR)
+    .with_session_code(session_code, runtime_args! {})
+    .build();
+```
+
+In the test, a deploy is created and signed by a new account with hash `ACCOUNT_USER_2`. When calling the entry point, an error is returned because the caller and the installer deploys do not have any authorization keys in common.
+
+```rust
+    // ACCOUNT_USER_2 does not have the contract installer (DEFAULT_ACCOUNT_ADDR) in its associated keys
+    // This deploy will therefore revert with PermissionDenied
+    let entry_point_deploy_item = DeployItemBuilder::new()
+        .with_empty_payment_bytes(runtime_args! {ARG_AMOUNT => *DEFAULT_PAYMENT})
+        .with_authorization_keys(&[account_addr_2])
+        .with_address(account_addr_2)
+        .with_stored_session_hash(contract_hash, ENTRYPOINT, runtime_args! {})
+        .build();
+
+    let entry_point_request =
+        ExecuteRequestBuilder::from_deploy_item(entry_point_deploy_item).build();
+
+    builder.exec(entry_point_request).commit().expect_failure();
+    let error = builder.get_error().expect("must have User error: 0");
+    assert_expected_error(
+        error,
+        0,
+        "should fail execution since DEFAULT_ACCOUNT_ADDR is not in ACCOUNT_USER_2 associated keys",
+    );
+```
+
+Here is how the test scenario could be summarized:
+
+| Installer deploy authorization keys | Caller deploy authorization keys | Intersection returned by the entry point|
+| DEFAULT_ACCOUNT_ADDR | account_addr_2 | N/A|
+
+
+The next tests exercise the entry point using a [contract call](#contract_callwasm) and verifying the result returned.
 
 #### `should_allow_entry_point_through_contract_call_with_authorization_key`
 
@@ -255,7 +340,101 @@ The following tests exercise the entry point using a client contract call.
 
 This test validates the entry point using a client contract call, where the caller is the account, the immediate caller is the contract, and the authorization_keys are "forwarded".
 
+The contract is installed using the default account in the deploy's authorization keys.
+
+```rust
+let session_code = PathBuf::from(CONTRACT_WASM);
+
+let deploy_item = DeployItemBuilder::new()
+    .with_empty_payment_bytes(runtime_args! {ARG_AMOUNT => *DEFAULT_PAYMENT})
+    .with_authorization_keys(&[*DEFAULT_ACCOUNT_ADDR])
+    .with_address(*DEFAULT_ACCOUNT_ADDR)
+    .with_session_code(session_code, runtime_args! {})
+    .build();
+```
+
+The caller deploy is signed by `account_addr_1` and `DEFAULT_ACCOUNT_ADDR`:
+
+```rust
+let entry_point_deploy_item = DeployItemBuilder::new()
+    .with_empty_payment_bytes(runtime_args! {ARG_AMOUNT => *DEFAULT_PAYMENT})
+    .with_authorization_keys(&[account_addr_1, *DEFAULT_ACCOUNT_ADDR])
+    .with_address(account_addr_1)
+    .with_session_code(session_code, session_args)
+    .build();
+
+let entry_point_request =
+    ExecuteRequestBuilder::from_deploy_item(entry_point_deploy_item).build();
+builder.exec(entry_point_request).expect_success().commit();
+```
+
+The test then verifies that the result returned was saved in the named keys for `ACCOUNT_USER_1` and it contains the default account address.
+
+```rust
+let intersection_receipt: Key = *builder
+    .get_expected_account(account_addr_1)
+    .named_keys()
+    .get(INTERSECTION_RECEIPT)
+    .expect("must have this entry in named keys");
+
+let actual_intersection = builder
+    .query(None, intersection_receipt, &[])
+    .expect("must have stored_value")
+    .as_cl_value()
+    .map(|intersection_cl_value| {
+        CLValue::into_t::<Vec<AccountHash>>(intersection_cl_value.clone())
+    })
+    .unwrap()
+    .unwrap();
+
+let expected_intersection = vec![*DEFAULT_ACCOUNT_ADDR];
+
+assert_eq!(actual_intersection, expected_intersection);
+```
+
+Here is how the test scenario could be summarized:
+
+| Installer deploy authorization keys | Caller deploy authorization keys | Intersection returned by the entry point|
+| DEFAULT_ACCOUNT_ADDR | account_addr_1, DEFAULT_ACCOUNT_ADDR | DEFAULT_ACCOUNT_ADDR |
+
 #### `should_disallow_entry_point_through_contract_call_without_authorization_key`
 
 <!-- TODO add link to Github integration_tests.rs#L509 -->
+
+The final test in this tutorial checks that when there is no intersection between the caller deploy's authorization keys (`account_addr_1`, `account_addr_2`) and the installer deploy's authorization keys (`DEFAULT_ACCOUNT_ADDR`), the entry point returns an error.
+
+```rust
+ let session_code = PathBuf::from(CONTRACT_CALL_WASM);
+
+let session_args = runtime_args! {
+    ARG_CONTRACT_HASH => Key::from(contract_hash),
+    ARG_KEY_NAME => INTERSECTION_RECEIPT
+};
+
+// ACCOUNT_USER_2 is not among the contract installer associated keys (DEFAULT_ACCOUNT_ADDR)
+// The deploy will therefore revert with PermissionDenied
+let entry_point_deploy_item = DeployItemBuilder::new()
+    .with_empty_payment_bytes(runtime_args! {ARG_AMOUNT => *DEFAULT_PAYMENT})
+    .with_authorization_keys(&[account_addr_1, account_addr_2])
+    .with_address(account_addr_1)
+    .with_session_code(session_code, session_args)
+    .build();
+
+let entry_point_request =
+    ExecuteRequestBuilder::from_deploy_item(entry_point_deploy_item).build();
+
+builder.exec(entry_point_request).commit().expect_failure();
+
+let error = builder.get_error().expect("must have User error: 0");
+assert_expected_error(
+    error,
+    0,
+    "should fail execution since ACCOUNT_USER_2 as associated key is not in installer (DEFAULT_ACCOUNT_ADDR) associated keys",
+);
+```
+
+Here is how the test scenario could be summarized:
+
+| Installer deploy authorization keys | Caller deploy authorization keys | Intersection returned by the entry point|
+| DEFAULT_ACCOUNT_ADDR | account_addr_1, account_addr_2 | N/A|
 
