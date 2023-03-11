@@ -23,6 +23,8 @@ Remember that authorization keys are listed under a Deploy's [approvals](https:/
 ]
 ```
 
+The contract code in this example retrieves the set of authorization keys for a given deploy by calling the `runtime::list_authorization_keys` function. In other words, `list_authorization_keys` returns the set of account hashes representing the keys used to sign a deploy. Upon installation, the contract code stores the authorization keys for the installer deploy into a NamedKey. The contract also contains an entry point that returns the intersection of the caller deploy's, and installer deploy's authorization keys. The tests in this repository verify different scenarios and check the resulting intersection. 
+
 **Note**: This tutorial highlights certain lines of code, but for a full working version of the code, visit [GitHub](https://github.com/casper-ecosystem/authorization-keys-example).
 
 
@@ -57,29 +59,6 @@ Review the repository's structure:
 - `tests` - Tests and supporting utilities to verify and demonstrate the contract's expected behavior
 
 
-### Client Wasm files
-
-#### `add_keys.wasm` 
-
-This file contains session code that adds an associated key to the calling account. For more details and a similar example, visit the [Two-Party Multi-Signature](https://docs.casperlabs.io/resources/tutorials/advanced/two-party-multi-sig/) tutorial.
-
-#### `contract_call.wasm`
-
-This session code calls the contract's entry point, which returns the intersection between two sets of keys:
-- The authorization keys that signed the deploy that installed the contract (referred to in this tutorial as the installer deploy)
-- The authorization keys that signed the deploy calling the entry point (referred to in this tutorial as the caller deploy).
-
-The intersection result is a list stored under a named key of the account calling the `contract_call.wasm`.
-
-```rust
-let key_name: String = runtime::get_named_arg(ARG_KEY_NAME);
-let intersection =
-    runtime::call_contract::<Vec<AccountHash>>(contract_hash, ENTRY_POINT, runtime_args! {});
-runtime::put_key(&key_name, storage::new_uref(intersection).into());
-}
-```
-
-
 ### The example contract
 
 Upon installation, the contract in this example stores the authorization keys that signed the installer deploy into a named key. <!-- TODO link installation to contract/src/main.rs#L75 -->
@@ -102,6 +81,29 @@ The contract contains an entry point that returns the intersection of the caller
 ```rust
 let authorization_keys_caller: Vec<AccountHash> =
     runtime::list_authorization_keys().iter().cloned().collect();
+```
+
+
+### Client Wasm files
+
+#### `add_keys.wasm` 
+
+This file contains session code that adds an associated key to the calling account. For more details and a similar example, visit the [Two-Party Multi-Signature](https://docs.casperlabs.io/resources/tutorials/advanced/two-party-multi-sig/) tutorial.
+
+#### `contract_call.wasm`
+
+This session code calls the contract's entry point, which returns the intersection between two sets of keys:
+- The authorization keys that signed the deploy that installed the contract (referred to in this tutorial as the installer deploy)
+- The authorization keys that signed the deploy calling the entry point (referred to in this tutorial as the caller deploy).
+
+The intersection result is a list stored under a named key of the account calling the `contract_call.wasm`.
+
+```rust
+let key_name: String = runtime::get_named_arg(ARG_KEY_NAME);
+let intersection =
+    runtime::call_contract::<Vec<AccountHash>>(contract_hash, ENTRY_POINT, runtime_args! {});
+runtime::put_key(&key_name, storage::new_uref(intersection).into());
+}
 ```
 
 
