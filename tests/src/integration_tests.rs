@@ -545,7 +545,6 @@ mod tests {
             ASSOCIATED_ACCOUNT => account_addr_2
         };
 
-        // Threshold is now 2 for ACCOUNT_USER_1 deploys
         let add_keys_deploy_item = DeployItemBuilder::new()
             .with_empty_payment_bytes(runtime_args! {ARG_AMOUNT => *DEFAULT_PAYMENT})
             .with_authorization_keys(&[account_addr_1])
